@@ -2,6 +2,15 @@
 
 tmux es el multiplexor de terminal para gestionar sesiones de auditoria. Permite mantener multiples herramientas corriendo en paralelo, organizar el flujo de trabajo por fases, y recuperar sesiones si se pierde la conexion.
 
+## Tabla de Contenidos
+
+- [Por que tmux para Pentesting](#por-que-tmux-para-pentesting)
+- [Sesion de Auditoria - Layout](#sesion-de-auditoria---layout) — Script de creacion, Layout visual
+- [Comandos tmux Esenciales](#comandos-tmux-esenciales) — Sesiones, Ventanas, Paneles, Avanzado
+- [Configuracion Recomendada](#configuracion-recomendada) — ~/.tmux.conf
+- [Patrones de Uso en Auditoria](#patrones-de-uso-en-auditoria) — Recon paralelo, Escaneo, Testing, Documentacion
+- [Integracion tmux + Claude Code](#integracion-tmux--claude-code)
+
 ## Por que tmux para Pentesting
 
 - Multiples paneles visibles simultaneamente (recon + proxy + exploits)

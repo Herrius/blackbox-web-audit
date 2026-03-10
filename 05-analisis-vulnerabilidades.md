@@ -1,5 +1,13 @@
 # 05 - Fase 3: Analisis de Vulnerabilidades
 
+## Tabla de Contenidos
+
+- [OWASP Top 10 - 2025](#owasp-top-10---2025)
+  - A01: Broken Access Control | A02: Security Misconfiguration | A03: Supply Chain
+  - A04: Cryptographic Failures | A05: Injection | A06: Insecure Design
+  - A07: Authentication | A08: Data Integrity | A09: Logging | A10: Exceptional Conditions
+- [Vulnerabilidades Adicionales Criticas](#vulnerabilidades-adicionales-criticas) — SSRF, File Upload, XXE, Race Conditions
+
 ## OWASP Top 10 - 2025
 
 La clasificacion mas actualizada de riesgos en aplicaciones web.

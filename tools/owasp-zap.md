@@ -2,6 +2,17 @@
 
 Zed Attack Proxy. Scanner de seguridad web open source. Esta referencia cubre exclusivamente uso via CLI, API, Docker y Automation Framework.
 
+## Tabla de Contenidos
+
+- [Instalacion](#instalacion)
+- [Daemon Mode](#daemon-mode) — Flags del Daemon
+- [API REST](#api-rest) — Spider, Ajax Spider, Active Scan, Passive Scan, Alertas, Contexto/Scope, Autenticacion, Reportes
+- [Docker Scan Scripts](#docker-scan-scripts) — zap-baseline.py, zap-full-scan.py, zap-api-scan.py
+- [Automation Framework](#automation-framework) — Jobs, YAML ejemplos (auditoria web, API scan, scan rapido)
+- [Scripts desde CLI](#scripts-desde-cli)
+- [Add-ons desde CLI](#add-ons-desde-cli)
+- [Workflow CLI Completo](#workflow-cli-completo)
+
 ## Instalacion
 
 ```bash

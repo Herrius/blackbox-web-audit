@@ -1,5 +1,13 @@
 # 07 - Fase 5: Post-Explotacion y Reporte
 
+## Tabla de Contenidos
+
+- [Post-Explotacion](#post-explotacion) — Evaluacion de Impacto, Limpieza
+- [CVSS 4.0 - Scoring](#cvss-40---scoring-de-vulnerabilidades) — Metricas Base, Rangos, Ejemplos
+- [Estructura del Reporte](#estructura-del-reporte) — Ejecutivo, Tecnico
+- [Plantilla de Hallazgo Individual](#plantilla-de-hallazgo-individual)
+- [Entrega y Presentacion](#entrega-y-presentacion)
+
 ## Post-Explotacion
 
 En caja negra web, la post-explotacion se centra en evaluar el impacto real del compromiso.

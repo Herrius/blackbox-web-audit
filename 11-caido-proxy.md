@@ -2,6 +2,17 @@
 
 Caido es el proxy de intercepcion principal para esta metodologia. Escrito en Rust, ofrece rendimiento superior, menor consumo de memoria y una interfaz moderna comparado con alternativas como Burp Suite.
 
+## Tabla de Contenidos
+
+- [Por que Caido](#por-que-caido) | [Instalacion](#instalacion) | [Setup Inicial](#setup-inicial)
+- [Equivalencia Burp Suite -> Caido](#equivalencia-burp-suite---caido)
+- [HTTPQL - Lenguaje de Consultas](#httpql---lenguaje-de-consultas) — Sintaxis, Consultas para Pentesting
+- [Workflows](#workflows) — Passive, Active, Convert
+- [Automate](#automate-equivalente-a-intruder) — Ejemplos de Ataques
+- [Plugins Esenciales](#plugins-esenciales)
+- [Flujo de Trabajo Completo](#flujo-de-trabajo-completo-con-caido)
+- [Tips y Atajos](#tips-y-atajos)
+
 ## Por que Caido
 
 - **Rendimiento:** Rust nativo, bajo consumo de RAM, respuesta rapida incluso con grandes volumenes de trafico

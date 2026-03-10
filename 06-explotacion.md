@@ -1,5 +1,14 @@
 # 06 - Fase 4: Explotacion
 
+## Tabla de Contenidos
+
+- [Principios de Explotacion en Caja Negra](#principios-de-explotacion-en-caja-negra)
+- [Explotacion por Tipo de Vulnerabilidad](#explotacion-por-tipo-de-vulnerabilidad)
+  - SQL Injection | XSS (Reflected, Stored, DOM) | SSRF | IDOR
+  - Authentication Bypass (JWT, OAuth, Brute Force) | File Upload to RCE | Command Injection
+- [Chaining de Vulnerabilidades](#chaining-de-vulnerabilidades) — 6 ejemplos de encadenamiento
+- [Documentacion de Explotacion](#documentacion-de-explotacion) — Plantilla por hallazgo
+
 ## Principios de Explotacion en Caja Negra
 
 1. **Documentar antes de explotar** - screenshot/log del estado previo
