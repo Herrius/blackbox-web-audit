@@ -161,11 +161,19 @@ nuclei -u target.com -ai "check for open redirect"
 # Solo templates nuevos
 nuclei -u target.com -nt
 
-# Rate limited (stealth)
-nuclei -u target.com -rl 3 -c 2
+# NOTA: nuclei NO tiene flag --insecure. TLS es tolerante por defecto.
 
-# Agresivo
+# Rate limited - con WAF
+nuclei -u target.com -rl 10 -c 5
+
+# Rate limited - sin WAF (produccion)
+nuclei -u target.com -rl 50
+
+# Rate limited - labs/CTF (agresivo)
 nuclei -u target.com -rl 500 -bs 50 -c 50
+
+# Produccion con timeout extendido (10min por template)
+nuclei -u target.com -rl 15 -timeout 600
 
 # Via proxy
 nuclei -u target.com -p http://127.0.0.1:8080

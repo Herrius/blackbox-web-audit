@@ -1,13 +1,19 @@
-# testssl.sh - Referencia
+# testssl / testssl - Referencia
 
 Script bash para testing completo de SSL/TLS. No requiere dependencias externas (usa su propio OpenSSL bundled). El mas completo para auditoria de configuracion SSL/TLS.
+
+> **Binary name varies by OS:** On Kali/Debian the binary is `/usr/bin/testssl` (no `.sh`). On macOS (via Homebrew) and when running from source, the binary is `testssl.sh`. Always verify with `which testssl testssl.sh` before running. All examples below use `testssl` for consistency with Kali.
 
 ## Instalacion
 
 ```bash
-sudo apt install testssl.sh     # Debian/Kali
-brew install testssl             # macOS
-# Desde source (version mas reciente)
+# Kali/Debian — binary is /usr/bin/testssl
+sudo apt install testssl.sh     # package name has .sh, binary does NOT
+
+# macOS — binary is testssl.sh
+brew install testssl
+
+# From source — binary is ./testssl.sh
 git clone --depth 1 https://github.com/drwetter/testssl.sh.git
 cd testssl.sh && ./testssl.sh
 ```
@@ -101,74 +107,74 @@ cd testssl.sh && ./testssl.sh
 
 ```bash
 # Test completo (mas comun)
-testssl.sh target.com
+testssl target.com
 
 # Test completo en puerto custom
-testssl.sh target.com:8443
+testssl target.com:8443
 
 # Solo vulnerabilidades
-testssl.sh -U target.com
+testssl -U target.com
 
 # Solo protocolos
-testssl.sh -p target.com
+testssl -p target.com
 
 # Solo cipher suites
-testssl.sh -E target.com
+testssl -E target.com
 
 # Solo headers de seguridad
-testssl.sh -h target.com
+testssl -h target.com
 
 # Solo server defaults (certificado)
-testssl.sh -S target.com
+testssl -S target.com
 
 # Vulnerabilidades especificas
-testssl.sh -B -I -T -BB target.com
+testssl -B -I -T -BB target.com
 
 # Output JSON
-testssl.sh --jsonfile results.json target.com
+testssl --jsonfile results.json target.com
 
 # Output HTML
-testssl.sh --htmlfile report.html target.com
+testssl --htmlfile report.html target.com
 
 # Multiples formatos
-testssl.sh --jsonfile scan.json --htmlfile scan.html --csvfile scan.csv target.com
+testssl --jsonfile scan.json --htmlfile scan.html --csvfile scan.csv target.com
 
 # Solo severidad alta y critica
-testssl.sh --severity HIGH target.com
+testssl --severity HIGH target.com
 
 # Scan rapido
-testssl.sh --fast target.com
+testssl --fast target.com
 
 # SMTP STARTTLS
-testssl.sh --starttls smtp mail.target.com:25
+testssl --starttls smtp mail.target.com:25
 
 # IMAP STARTTLS
-testssl.sh --starttls imap mail.target.com:143
+testssl --starttls imap mail.target.com:143
 
 # Multiples targets
-testssl.sh --file targets.txt --mode parallel
+testssl --file targets.txt --mode parallel
 
 # Via proxy
-testssl.sh --proxy proxy.corp.com:8080 target.com
+testssl --proxy proxy.corp.com:8080 target.com
 
 # IP especifica (bypass DNS)
-testssl.sh --ip 10.0.0.1 target.com
+testssl --ip 10.0.0.1 target.com
 
 # CA interna
-testssl.sh --add-ca /path/to/internal-ca.pem internal.corp.com
+testssl --add-ca /path/to/internal-ca.pem internal.corp.com
 
 # Stealth (user-agent no obvio)
-testssl.sh --sneaky target.com
+testssl --sneaky target.com
 
 # Debug verboso
-testssl.sh --debug 2 target.com
+testssl --debug 2 target.com
 
 # Full test con CRL/OCSP checking
-testssl.sh --full --phone-out target.com
+testssl --full --phone-out target.com
 
 # Con hints de mejora
-testssl.sh --hints target.com
+testssl --hints target.com
 
 # Wide output (para terminales anchas)
-testssl.sh --wide target.com
+testssl --wide target.com
 ```

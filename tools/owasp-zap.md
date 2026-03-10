@@ -9,6 +9,9 @@ Zed Attack Proxy. Scanner de seguridad web open source. Esta referencia cubre ex
 - [API REST](#api-rest) — Spider, Ajax Spider, Active Scan, Passive Scan, Alertas, Contexto/Scope, Autenticacion, Reportes
 - [Docker Scan Scripts](#docker-scan-scripts) — zap-baseline.py, zap-full-scan.py, zap-api-scan.py
 - [Automation Framework](#automation-framework) — Jobs, YAML ejemplos (auditoria web, API scan, scan rapido)
+- [URL Seeding from Prior Recon](#url-seeding-from-prior-recon)
+- [Rate Limiting via API](#rate-limiting-via-api)
+- [False Positive Analysis](#false-positive-analysis)
 - [Scripts desde CLI](#scripts-desde-cli)
 - [Add-ons desde CLI](#add-ons-desde-cli)
 - [Workflow CLI Completo](#workflow-cli-completo)
@@ -664,6 +667,110 @@ curl "http://localhost:8090/JSON/autoupdate/action/uninstallAddon/?apikey=KEY&id
 # Actualizar todos
 curl "http://localhost:8090/JSON/autoupdate/action/updateAddons/?apikey=KEY"
 ```
+
+## URL Seeding from Prior Recon
+
+ZAP's spider may miss URLs found by other tools. Seed the site tree with URLs from prior recon phases to ensure comprehensive active scanning.
+
+```bash
+# Seed URLs from feroxbuster output (one URL per line)
+while IFS= read -r url; do
+  curl -s "http://localhost:8090/JSON/core/action/accessUrl/?apikey=KEY&url=${url}&followRedirects=true" > /dev/null
+done < feroxbuster_results.txt
+
+# Seed URLs from gau output
+cat gau_urls.txt | grep "https://target.com" | sort -u | while IFS= read -r url; do
+  curl -s "http://localhost:8090/JSON/core/action/accessUrl/?apikey=KEY&url=${url}&followRedirects=true" > /dev/null
+done
+
+# Seed specific endpoints discovered manually
+for endpoint in /api/v1/users /api/v1/orders /admin/dashboard /internal/status; do
+  curl -s "http://localhost:8090/JSON/core/action/accessUrl/?apikey=KEY&url=https://target.com${endpoint}&followRedirects=true" > /dev/null
+done
+
+# Verify seeded URLs appear in site tree
+curl -s "http://localhost:8090/JSON/core/view/sites/?apikey=KEY" | jq
+```
+
+## Rate Limiting via API
+
+For WAF-protected targets, configure ZAP's scan speed to avoid getting blocked.
+
+```bash
+# Limit active scan rule duration (minutes per rule)
+curl -s "http://localhost:8090/JSON/ascan/action/setOptionMaxRuleDurationInMins/?apikey=KEY&Integer=5"
+
+# Limit threads per host (default: 2, reduce for WAF targets)
+curl -s "http://localhost:8090/JSON/ascan/action/setOptionThreadPerHost/?apikey=KEY&Integer=2"
+
+# Add delay between requests (milliseconds)
+curl -s "http://localhost:8090/JSON/ascan/action/setOptionDelayInMs/?apikey=KEY&Integer=500"
+
+# Limit total scan duration (minutes)
+curl -s "http://localhost:8090/JSON/ascan/action/setOptionMaxScanDurationInMins/?apikey=KEY&Integer=60"
+```
+
+Recommended settings by target type:
+
+| Setting | With WAF | Without WAF |
+|---------|----------|-------------|
+| `maxRuleDurationInMins` | 5 | 10 |
+| `threadPerHost` | 2 | 5 |
+| `delayInMs` | 500 | 100 |
+| `maxScanDurationInMins` | 60 | 120 |
+
+## False Positive Analysis
+
+ZAP active scans on modern frameworks (especially Laravel, Next.js, Django) generate many false positives. Use this workflow to triage.
+
+### Common FP Patterns
+
+| ruleId | Alert Name | Typical FP Scenario |
+|--------|-----------|---------------------|
+| 40018 | SQL Injection | WAF returns different error pages for special characters |
+| 40012 | Cross Site Scripting (Reflected) | Framework auto-escapes; ZAP sees reflection but XSS doesn't execute |
+| 40014 | Cross Site Scripting (Persistent) | Same as above for stored context |
+| 6 | Path Traversal | Different 403/404 page sizes trigger the rule |
+| 7 | Remote File Inclusion | Similar response-size variance |
+| 40046 | Server Side Request Forgery | Parameter changes cause different responses but no actual SSRF |
+| 10202 | Absence of Anti-CSRF Tokens | API endpoints use Bearer/XSRF-TOKEN headers instead of form tokens |
+
+### Triage Workflow
+
+1. Export all alerts as JSON:
+```bash
+curl -s "http://localhost:8090/JSON/alert/view/alerts/?apikey=KEY&baseurl=https://target.com&start=0&count=500" | jq > zap_alerts.json
+```
+
+2. Group and count by ruleId:
+```bash
+jq '[.alerts[] | .pluginId] | group_by(.) | map({id: .[0], count: length}) | sort_by(-.count)' zap_alerts.json
+```
+
+3. For each high-count alert type, manually verify top 2-3 instances
+4. Add confirmed false positives to alertFilter in automation YAML:
+
+```yaml
+# alertFilter for known Laravel Sanctum FPs
+- type: alertFilter
+  alertFilters:
+    # CSRF on API endpoints using Sanctum token auth
+    - ruleId: 10202
+      newRisk: "False Positive"
+      urlRegex: ".*/api/.*"
+      parameter: ""
+      enabled: true
+    # XSS reflected on auto-escaped Blade output
+    - ruleId: 40012
+      newRisk: "False Positive"
+      urlRegex: ".*"
+      evidence: "(?i)&lt;script"
+      enabled: true
+```
+
+5. Re-run report generation after applying filters to get clean findings
+
+---
 
 ## Workflow CLI Completo
 

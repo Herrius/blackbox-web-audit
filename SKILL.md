@@ -99,7 +99,7 @@ The tables below map tasks to tools. When multiple tools do similar things, the 
 
 | Task | Tool | When to pick this one |
 |------|------|-----------------------|
-| SSL/TLS testing | **testssl** | Most comprehensive. No dependencies (bundled OpenSSL). Default choice for SSL auditing. |
+| SSL/TLS testing | **testssl** | Most comprehensive. No dependencies (bundled OpenSSL). Default choice for SSL auditing. Note: on Kali the binary is `testssl`, on macOS/source it's `testssl.sh`. |
 | SSL/TLS testing | **sslscan** | Fast scan in C. Use when you need quick results or colorized terminal output. |
 | SSL/TLS testing | **sslyze** | Python-based, JSON output, CI-friendly. Best for automation pipelines. |
 
@@ -142,7 +142,8 @@ masscan -p1-65535 TARGET_IP --rate=1000 -oL ports.txt
 nmap -sC -sV -p DISCOVERED_PORTS TARGET_IP -oA nmap_detailed
 
 # Content discovery (recursive)
-feroxbuster -u https://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -x php,html,js -t 50
+feroxbuster -u https://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
+  -x php,html,js -t 10 --rate-limit 15 --time-limit 10m --insecure 2>&1
 
 # Hidden parameter discovery on interesting endpoints
 arjun -u https://target.com/api/endpoint
@@ -153,10 +154,10 @@ wpscan --url https://target.com -e ap,at,u --api-token YOUR_TOKEN
 # === PHASE 3: VULN ANALYSIS ===
 
 # Broad vulnerability scan
-nuclei -u https://target.com -as -rl 50
+nuclei -u https://target.com -as -rl 15 -timeout 600
 
 # SSL/TLS audit
-testssl.sh --html target.com:443
+testssl --html target.com:443
 
 # === PHASE 4: TARGETED EXPLOITATION (based on findings) ===
 
@@ -290,6 +291,73 @@ req.path.cont:"/api/" AND resp.code.eq:200               # successful API calls
 Each file has: installation, flags in tables, practical examples. Read `tools/<toolname>.md`.
 
 **By category:** Network (nmap, masscan) · Subdomains (subfinder, amass) · Web Recon (httpx, katana, gospider, waybackurls, gau, theharvester, whatweb, wafw00f) · Content Discovery (ffuf, feroxbuster, gobuster) · Vuln Scanning (nuclei, nikto, wpscan, owasp-zap) · Injection (sqlmap, xsstrike, dalfox, commix, tplmap) · Auth (jwt_tool, hydra) · Cracking (hashcat, john, cewl) · SSL/TLS (testssl, sslscan, sslyze) · Proxy (mitmproxy) · Params (arjun)
+
+---
+
+## Production Target Best Practices
+
+Lessons learned from auditing WAF-protected production targets. These apply whenever you're testing a real system (not a lab/CTF).
+
+### Tool Execution Discipline
+
+Every tool invocation against a production target should follow these rules:
+
+- **Time limits**: Always set a time limit (default: 10 minutes). Tools that hang waste engagement time and can trigger WAF bans.
+- **Capture stderr**: Append `2>&1` to capture errors in the same output stream. Many tools print critical warnings (TLS errors, rate limit hits) only to stderr.
+- **TLS tolerance**: Use `--insecure` / `-k` on tools that support it. Production targets often have incomplete certificate chains, internal CAs, or mismatched SANs that cause tools to fail silently.
+
+### Rate Limiting Table
+
+Adapt rates based on whether a WAF is present (detected by wafw00f in recon phase).
+
+| Tool | With WAF | Without WAF | Lab/CTF |
+|------|----------|-------------|---------|
+| feroxbuster | `-t 10 --rate-limit 10` | `-t 30 --rate-limit 50` | `-t 50` (default) |
+| ffuf | `-rate 10 -t 10` | `-rate 50 -t 40` | `-t 50` (default) |
+| nuclei | `-rl 10 -c 5` | `-rl 50` | `-rl 500` |
+| gobuster | `-t 10` | `-t 30` | `-t 50` |
+| nikto | `-maxtime 600` | `-maxtime 600` | (default) |
+| ZAP active scan | `delayInMs=500, threadPerHost=2` | `delayInMs=100, threadPerHost=5` | (default) |
+
+### Binary Name Variations
+
+Some tools have different binary names depending on OS/install method:
+
+| Tool | Kali/Debian | macOS/Source |
+|------|-------------|--------------|
+| testssl | `/usr/bin/testssl` | `testssl.sh` |
+
+Always check with `which testssl testssl.sh` before running.
+
+### ZAP False Positive Triage
+
+ZAP active scans generate many false positives, especially against modern frameworks. These 7 patterns are common FPs:
+
+| Alert | Why It's Usually FP | Verification |
+|-------|--------------------|----|
+| SQL Injection (40018) | WAF/framework returns different error pages for special chars | Manually inject `' OR 1=1--` and check if DB actually responds |
+| Cross Site Scripting (40012/40014) | Framework auto-escapes output; ZAP sees reflection but no execution | Check if reflected payload actually renders unescaped in browser |
+| Path Traversal (6) | 403/404 responses with different sizes trigger the rule | Verify if `../../etc/passwd` actually returns file contents |
+| Remote File Inclusion (7) | Similar to path traversal — different error responses trigger it | Check if external URL content actually appears in response |
+| Server Side Request Forgery (40046) | Parameter value change causes different response; not actual SSRF | Test with an out-of-band callback (interactsh/webhook.site) |
+| CSRF (40014) on API endpoints | SPA frameworks use tokens in headers, not traditional form tokens | Check if endpoint requires auth header (Bearer/XSRF-TOKEN) |
+| Missing Anti-clickjacking Header | CSP with `frame-ancestors` is the modern replacement for X-Frame-Options | Check if CSP `frame-ancestors` directive is present |
+
+**Triage workflow:**
+1. Export alerts as JSON: `curl "http://localhost:8090/JSON/alert/view/alerts/?baseurl=https://target.com" | jq`
+2. Group by ruleId and count occurrences
+3. For each alert type, manually verify the top 2-3 instances
+4. If all instances are FP, add an `alertFilter` to the automation YAML
+5. Remaining verified findings go into the report
+
+### Laravel Sanctum Testing Notes
+
+Laravel with Sanctum (SPA authentication) has specific behaviors that affect testing:
+
+- **XSRF-TOKEN cookie**: Sanctum sets an `XSRF-TOKEN` cookie on GET `/sanctum/csrf-cookie`. The SPA must send this value in the `X-XSRF-TOKEN` header on subsequent requests.
+- **SameSite=Lax**: Default Laravel config sets `SameSite=Lax` on session cookies, which prevents cross-origin POST with cookies — this is intentional protection, not a finding.
+- **CSRF on API routes**: Routes under `api/` middleware may not require CSRF tokens (they use Bearer tokens instead). This is by design when using Sanctum's token auth, not a missing CSRF protection.
+- **419 responses**: A 419 status code means "CSRF token mismatch" — the token expired or wasn't sent. This is normal behavior, not a vulnerability.
 
 ---
 

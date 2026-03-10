@@ -156,6 +156,16 @@ feroxbuster --resume-from ferox-STATE.json
 # Limite de tiempo
 feroxbuster -u https://target.com --time-limit 30m
 
+# Target con cadena TLS incompleta
+feroxbuster -u https://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
+  --insecure --time-limit 10m
+
+# Target con WAF (rate limitado + TLS tolerante + captura stderr)
+feroxbuster -u https://target.com -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt \
+  -t 10 --rate-limit 10 --time-limit 10m --insecure 2>&1
+
+# NOTA: En produccion siempre usar --time-limit para evitar que el scan cuelgue indefinidamente
+
 # POST requests
 feroxbuster -u https://target.com/api -m POST -d '{"key":"FUZZ"}'
 
