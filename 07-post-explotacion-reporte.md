@@ -270,6 +270,12 @@ Content-Type: application/json
 {"users": [{"id":1,"name":"admin","email":"admin@target.com"}, ...]}
 ```
 
+### Origen del Hallazgo
+- [ ] Descubierto manualmente
+- [ ] Descubierto por scanner → Reproducido manualmente: Sí / No
+- **Scanner:** [ZAP/Nuclei/Nikto/otro]
+- **Verificación manual:** [Comando curl o request usado para confirmar]
+
 ### Evidencia
 [Screenshot 1: Descripcion]
 [Screenshot 2: Descripcion]

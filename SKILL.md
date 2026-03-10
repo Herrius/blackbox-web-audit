@@ -305,6 +305,7 @@ Every tool invocation against a production target should follow these rules:
 - **Time limits**: Always set a time limit (default: 10 minutes). Tools that hang waste engagement time and can trigger WAF bans.
 - **Capture stderr**: Append `2>&1` to capture errors in the same output stream. Many tools print critical warnings (TLS errors, rate limit hits) only to stderr.
 - **TLS tolerance**: Use `--insecure` / `-k` on tools that support it. Production targets often have incomplete certificate chains, internal CAs, or mismatched SANs that cause tools to fail silently.
+- **Always guardar output de cada comando con `| tee archivo.txt`** o redirigir con `> archivo.txt 2>&1`. Cada prueba manual debe quedar registrada en archivo para evidencia reproducible. Sin archivo de output, el hallazgo no tiene respaldo demostrable.
 
 ### Rate Limiting Table
 
@@ -342,6 +343,10 @@ ZAP active scans generate many false positives, especially against modern framew
 | Server Side Request Forgery (40046) | Parameter value change causes different response; not actual SSRF | Test with an out-of-band callback (interactsh/webhook.site) |
 | CSRF (40014) on API endpoints | SPA frameworks use tokens in headers, not traditional form tokens | Check if endpoint requires auth header (Bearer/XSRF-TOKEN) |
 | Missing Anti-clickjacking Header | CSP with `frame-ancestors` is the modern replacement for X-Frame-Options | Check if CSP `frame-ancestors` directive is present |
+
+8. **Scanner ≠ Evidencia**: Nunca reportar un hallazgo de scanner automatizado sin
+   reproducirlo manualmente con los headers y contexto que usa el cliente real de la
+   aplicación. Si no se reproduce manualmente, no va al reporte.
 
 **Triage workflow:**
 1. Export alerts as JSON: `curl "http://localhost:8090/JSON/alert/view/alerts/?baseurl=https://target.com" | jq`

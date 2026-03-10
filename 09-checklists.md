@@ -248,6 +248,7 @@ Contenido:
 [ ] Todos los hallazgos tienen evidencia (screenshots/requests)
 [ ] Todas las remediaciones son especificas y accionables
 [ ] No hay falsos positivos incluidos
+[ ] Todos los hallazgos de scanners fueron reproducidos manualmente con headers reales del cliente (Accept, Content-Type, cookies)
 [ ] Hallazgos clasificados correctamente por severidad
 
 Formato:
